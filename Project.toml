@@ -1,0 +1,4 @@
+name = "MetadataNumbers"
+uuid = "6398e7a4-56c9-408f-8786-a82b24bda816"
+authors = ["Zachary P. Christensen <zchristensen7@gmail.com>"]
+version = "0.1.0"
