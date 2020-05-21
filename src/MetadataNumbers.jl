@@ -27,7 +27,7 @@ abstract type AbstractNumber end
 
 struct MetaNumber{T,M} <: AbstractNumber
     value::T
-    meta::M
+    metadata::M
 
     MetaNumber{T,M}(value::T, meta::M) where {T,M} = new{T,M}(value, meta)
 end
@@ -35,18 +35,18 @@ end
 MetaNumber(value::T, meta::M=nothing) where {T,M} = MetaNumber{T,M}(value, meta)
 
 """
-    getnum(x)
+    value(x)
 
 Return the primitive number that `x` contains.
 """
-getnum(x::MetaNumber) = getfield(x, :value)
+value(x::MetaNumber) = getfield(x, :value)
 
 """
-    getmeta(x::MetaNumber)
+    metadata(x::MetaNumber)
 
 Return the metadata that `x` contains.
 """
-getmeta(x::MetaNumber) = getfield(x, :meta)
+metadata(x::MetaNumber) = getfield(x, :metadata)
 
 """
     numtype(::Type{T})
@@ -74,9 +74,9 @@ that will splat at construction of a new type. Defaults to emptye tuple (i.e. `(
 If both `x` and `y` are a `MetaNumber` then they are chained as a tuple of both of metadata.
 """
 construction_args(context, x, y) = ()
-construction_args(context, x::MetaNumber, y) = (getmeta(x),)
-construction_args(context, x, y::MetaNumber) = (getmeta(y),)
-construction_args(context, x::MetaNumber, y::MetaNumber) = (getmeta(y), getmeta(x))
+construction_args(context, x::MetaNumber, y) = (metadata(x),)
+construction_args(context, x, y::MetaNumber) = (metadata(y),)
+construction_args(context, x::MetaNumber, y::MetaNumber) = (metadata(y), metadata(x))
 
 """
     construction_args(context, x) -> Tuple
@@ -85,7 +85,7 @@ Returns a tuple for reconstruction values for the number `x`. If no values besid
 underlying number are necessary then an empty tuple is returned (i.e. `()`).
 """
 construction_args(context, x) = ()
-construction_args(context, x::MetaNumber) = (getmeta(x),)
+construction_args(context, x::MetaNumber) = (metadata(x),)
 
 
 
@@ -118,14 +118,14 @@ end
 # 2-AbstractNumber -> 1-AbstractNumber
 for f in (:(>>), :(<<), :(>>>), :(*), :(-), :(+), :(^), :(/), :div, :rem)
     @eval begin
-        Base.$f(x, y::AbstractNumber) = reconstruct_number($f, $f(x, getnum(y)), x, y)
-        Base.$f(x::AbstractNumber, y) = reconstruct_number($f, $f(x, getnum(y)), x, y)
-        Base.$f(x::AbstractNumber, y::AbstractNumber) = reconstruct_number($f, $f(x, getnum(y)), x, y)
+        Base.$f(x, y::AbstractNumber) = reconstruct_number($f, $f(x, value(y)), x, y)
+        Base.$f(x::AbstractNumber, y) = reconstruct_number($f, $f(x, value(y)), x, y)
+        Base.$f(x::AbstractNumber, y::AbstractNumber) = reconstruct_number($f, $f(x, value(y)), x, y)
     end
 end
 
 #=
-Base.round(x::AbstractNumber, args...) = round(getnum(x), args...)
+Base.round(x::AbstractNumber, args...) = round(value(x), args...)
 
 Base.signed(::Type{T}) where {T<:AbstractNumber} = similar_type(T, signed(numtype(T)))
 Base.flipsign(::$ST{X}, ::$ST{Y}) where {X,Y} = $ST{flipsign(X::$BT, Y::$BT)}()
@@ -139,7 +139,7 @@ Base.powermod(::$ST{X}, ::$ST{P}, ::$ST{M}) where {X,P,M} = $ST{powermod(X::$BT,
 # 1-AbstractNumber -> 1 out
 for f in (:isone, :iszero, :(!), :trailing_zeros, :trailing_ones, :count_ones, :leading_zeros, :leading_ones)
     @eval begin
-        Base.$f(x::AbstractNumber) = $f(getnum())
+        Base.$f(x::AbstractNumber) = $f(value())
     end
 end
 
@@ -147,9 +147,9 @@ end
 # 2-AbstractNumber -> bool
 for f in (:(==), :(!=), :(>), :(<), :(>=), :(<=), :isless, :(&), :(|), :xor)
     @eval begin
-        Base.$f(x, y::AbstractNumber) = $f(x, getnum(y))
-        Base.$f(x::AbstractNumber, y) = $f(getnum(x), y)
-        Base.$f(x::AbstractNumber, y::AbstractNumber) = $f(getnum(x), getnum(y))
+        Base.$f(x, y::AbstractNumber) = $f(x, value(y))
+        Base.$f(x::AbstractNumber, y) = $f(value(x), y)
+        Base.$f(x::AbstractNumber, y::AbstractNumber) = $f(value(x), value(y))
     end
 end
 
